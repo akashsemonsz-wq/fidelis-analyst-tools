@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fidelis Analyst Portal</title>
+    <style>
+        :root { --navy: #1a365d; --green: #2ecc71; --slate: #64748b; --bg: #f8fafc; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 0; }
+        
+        /* Header */
+        header { background: var(--navy); color: white; padding: 40px 20px; text-align: center; border-bottom: 5px solid var(--green); }
+        header h1 { margin: 0; font-size: 32px; letter-spacing: -1px; }
+        header p { margin: 5px 0 0; opacity: 0.8; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* Dashboard Grid */
+        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+
+        /* Card Styles */
+        .card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; transition: transform 0.2s; text-decoration: none; color: inherit; display: flex; flex-direction: column; }
+        .card:hover { transform: translateY(-5px); border-color: var(--green); }
+        .card h2 { margin: 0 0 10px; color: var(--navy); font-size: 20px; }
+        .card p { margin: 0; color: var(--slate); font-size: 14px; line-height: 1.5; }
+        .tag { display: inline-block; background: #f1f5f9; color: var(--navy); font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 4px; margin-bottom: 15px; text-transform: uppercase; }
+
+        .footer { text-align: center; margin-top: 60px; color: var(--slate); font-size: 12px; padding-bottom: 40px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>FIDELIS ANALYST PORTAL</h1>
+    <p>Proprietary Underwriting & Portfolio Tools</p>
+</header>
+
+<div class="container">
+    <div class="grid">
+        <a href="underwriter.html" class="card">
+            <span class="tag">Calculator</span>
+            <h2>Unified RTL Underwriter</h2>
+            <p>Automated LTV/ARLTV/LTC auditing against Jan 2026 Guidelines. Includes FL, CA, and NY state-specific logic.</p>
+        </a>
+
+        <a href="#" class="card" style="opacity: 0.6; cursor: not-allowed;">
+            <span class="tag">Coming Soon</span>
+            <h2>Rehab Budget Auditor</h2>
+            <p>Audits line items for "Eligible Hard Costs" (Sec 9c) and flags ineligible soft costs like interest carry or late fees.</p>
+        </a>
+
+        <a href="checklist.html" class="card">
+            <span class="tag">Compliance</span>
+            <h2>Submission Checklist</h2>
+            <p>Interactive "Complete File" guide based on Appendix C. Ensure all 22 required documents are ready for funding.</p>
+        </a>
+    </div>
+
+    <div class="footer">
+        Fidelis Investors, LLC | Proprietary Internal Resource | Updated Jan 2026
+    </div>
+</div>
+
+</body>
+</html>
