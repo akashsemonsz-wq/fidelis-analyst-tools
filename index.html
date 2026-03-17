@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        :root { --navy: #1a365d; --green: #2ecc71; --slate: #64748b; --bg: #f1f5f9; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: #334155; margin: 0; padding: 20px; }
+        .dashboard { max-width: 1100px; margin: auto; display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
+        
+        /* Sidebar Styles */
+        .panel { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 25px; border-top: 6px solid var(--navy); }
+        .brand { border-left: 4px solid var(--green); padding-left: 15px; margin-bottom: 30px; }
+        .brand h1 { font-size: 28px; margin: 0; color: var(--navy); letter-spacing: -1px; }
+        .brand p { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: var(--slate); }
+
+        /* Form Elements */
+        label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--slate); margin: 15px 0 5px; }
+        select, input { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
+        .btn { background: var(--green); color: white; width: 100%; border: none; padding: 15px; border-radius: 6px; font-weight: 700; margin-top: 20px; cursor: pointer; transition: 0.2s; }
+        .btn:hover { background: #27ae60; }
+
+        /* Results Display */
+        .results-area { display: flex; flex-direction: column; gap: 20px; }
+        .status-box { padding: 20px; border-radius: 8px; font-weight: 600; display: none; }
+        .pass { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        .fail { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+        
+        .metric-card { background: white; border-radius: 8px; padding: 15px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+        .metric-val { font-size: 18px; font-weight: 800; color: var(--navy); }
+        .metric-label { font-size: 12px; color: var(--slate); }
+
+        .flag-list { color: #991b1b; font-size: 13px; margin-top: 10px; padding-left: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <div class="panel">
+        <div class="brand"><h1>F</h1><p>Fidelis Investors</p></div>
+        
+        <label>Property Type</label>
+        <select id="propType">
+            <option value="sfr">Residential (1-4 Unit)</option>
+            <option value="mf">Multifamily (5-50 Unit)</option>
+        </select>
+
+        <label>Location</label>
+        <select id="state">
+            <option value="standard">Standard (National)</option>
+            <option value="FL">Florida (Appx A-2)</option>
+            <option value="CANY">CA & NY (Appx A-3)</option>
+        </select>
+
+        <label>Loan Purpose / Strategy</label>
+        <select id="strategy">
+            <option value="ff">Purchase: Fix & Flip / Hold</option>
+            <option value="nc">Purchase: New Construction</option>
+            <option value="bridge">Purchase: Bridge</option>
+            <option value="reff">Refi: Fix & Flip / Hold</option>
+        </select>
+
+        <label>Borrower FICO & 36-Mo Experience</label>
+        <div style="display: flex; gap: 10px;">
+            <input type="number" id="fico" placeholder="FICO">
+            <input type="number" id="exp" placeholder="Projects">
+        </div>
+
+        <label>As-Is Value | Rehab | ARV</label>
+        <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+            <input type="number" id="asis" placeholder="As-Is $">
+            <input type="number" id="rehab" placeholder="Rehab $">
+        </div>
+        <input type="number" id="arv" placeholder="After Repair Value (ARV) $">
+
+        <label>Requested Total Loan Amount</label>
+        <input type="number" id="loan" placeholder="Total Note Balance">
+
+        <button class="btn" onclick="runFidelisAudit()">RUN FULL AUDIT</button>
+    </div>
+
+    <div class="results-area">
+        <div id="statusBox" class="status-box"></div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="metric-card">
+                <div><div class="metric-label">Acq. LTV</div><div id="v_acq" class="metric-val">--</div></div>
+                <div id="l_acq" class="metric-label">Limit: --</div>
+            </div>
+            <div class="metric-card">
+                <div><div class="metric-label">ARLTV</div><div id="v_ar" class="metric-val">--</div></div>
+                <div id="l_ar" class="metric-label">Limit: --</div>
+            </div>
+            <div class="metric-card">
+                <div><div class="metric-label">LTC</div><div id="v_ltc" class="metric-val">--</div></div>
+                <div id="l_ltc" class="metric-label">Limit: --</div>
+            </div>
+            <div class="metric-card">
+                <div><div class="metric-label">Max Loan</div><div id="v_max" class="metric-val">--</div></div>
+                <div id="l_tier" class="metric-label">Tier: --</div>
+            </div>
+        </div>
+
+        <div class="panel" style="border-top: 4px solid #e2e8f0;">
+            <h3 style="margin-top:0; font-size:14px; color:var(--slate)">GUIDELINE CHECKLIST (SEC 11)</h3>
+            <div id="flags" class="flag-list"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+function runFidelisAudit() {
+    // Inputs
+    const prop = document.getElementById('propType').value;
+    const state = document.getElementById('state').value;
+    const strat = document.getElementById('strategy').value;
+    const fico = parseInt(document.getElementById('fico').value) || 0;
+    const exp = parseInt(document.getElementById('exp').value) || 0;
+    const asis = parseFloat(document.getElementById('asis').value) || 0;
+    const rehab = parseFloat(document.getElementById('rehab').value) || 0;
+    const arv = parseFloat(document.getElementById('arv').value) || 0;
+    const loan = parseFloat(document.getElementById('loan').value) || 0;
+
+    // 1. Assign Tier [Section 10c]
+    let tier = (exp >= 3) ? 1 : (exp >= 1 ? 2 : 3);
+    
+    // 2. Load Matrix Limits [Appendix A/B]
+    let limits = { acq: 0, ar: 0, ltc: 0, max: 0, minFico: 0 };
+    
+    if (prop === 'mf') { // Multifamily Appendix B
+        const mfRules = { 1: {acq:75, ar:70, ltc:80, max:8.5e6, fico:650}, 2: {acq:72.5, ar:70, ltc:75, max:4.5e6, fico:660}, 3: {acq:70, ar:65, ltc:70, max:1.5e6, fico:680} };
+        limits = mfRules[tier];
+    } else {
+        // Residential (State Specific)
+        if (state === 'FL') { // Florida Appendix A-2
+            const flRules = { 1: {acq:85, ar:70, ltc:87.5, max:1.5e6, fico:700}, 2: {acq:85, ar:70, ltc:85, max:1.5e6, fico:730}, 3: {acq:80, ar:65, ltc:85, max:950000, fico:740} };
+            limits = flRules[tier];
+        } else if (state === 'CANY') { // CA & NY Appendix A-3
+            const canyRules = { 1: {acq:90, ar:75, ltc:92.5, max:3.5e6, fico:640}, 2: {acq:90, ar:70, ltc:92.5, max:3.5e6, fico:660}, 3: {acq:80, ar:70, ltc:85, max:950000, fico:680} };
+            limits = canyRules[tier];
+        } else { // Standard National Appendix A-1
+            const stdRules = { 1: {acq:90, ar:75, ltc:92.5, max:3e6, fico:600}, 2: {acq:90, ar:70, ltc:92.5, max:2.5e6, fico:660}, 3: {acq:80, ar:65, ltc:85, max:950000, fico:680} };
+            limits = stdRules[tier];
+        }
+    }
+
+    // 3. Calculations [Section 9]
+    const acqLTV = ((loan - rehab) / asis) * 100;
+    const arLTV = (loan / arv) * 100;
+    const ltc = (loan / (asis + rehab)) * 100;
+
+    // 4. Update UI
+    document.getElementById('v_acq').innerText = acqLTV.toFixed(1) + '%';
+    document.getElementById('v_ar').innerText = arLTV.toFixed(1) + '%';
+    document.getElementById('v_ltc').innerText = ltc.toFixed(1) + '%';
+    document.getElementById('v_max').innerText = '$' + (limits.max/1000000).toFixed(1) + 'M';
+    
+    document.getElementById('l_acq').innerText = 'Limit: ' + limits.acq + '%';
+    document.getElementById('l_ar').innerText = 'Limit: ' + limits.ar + '%';
+    document.getElementById('l_ltc').innerText = 'Limit: ' + limits.ltc + '%';
+    document.getElementById('l_tier').innerText = 'Tier ' + tier + ' Borrower';
+
+    // 5. Audit Results
+    let issues = [];
+    if (fico < limits.minFico) issues.push(`FICO ${fico} below ${limits.minFico} min.`);
+    if (acqLTV > limits.acq) issues.push(`Acq. LTV exceeds ${limits.acq}% limit.`);
+    if (arLTV > limits.ar) issues.push(`ARLTV exceeds ${limits.ar}% limit.`);
+    if (ltc > limits.ltc) issues.push(`LTC exceeds ${limits.ltc}% limit.`);
+    if (loan > limits.max) issues.push(`Loan exceeds Tier ${tier} cap.`);
+    if (prop === 'mf' && arv/loan*loan/1 < 100000) issues.push(`Ineligible: ARV/Unit < $100k [Sec 15b]`);
+
+    const status = document.getElementById('statusBox');
+    status.style.display = "block";
+    if (issues.length === 0) {
+        status.className = "status-box pass";
+        status.innerText = "✔ COMPLIANT WITH FIDELIS JAN 2026 GUIDELINES";
+        document.getElementById('flags').innerHTML = "<li>No guideline violations detected.</li>";
+    } else {
+        status.className = "status-box fail";
+        status.innerText = "✘ NON-COMPLIANT: SEE EXCEPTIONS BELOW";
+        document.getElementById('flags').innerHTML = "<li>" + issues.join("</li><li>") + "</li>";
+    }
+}
+</script>
+</body>
+</html>
